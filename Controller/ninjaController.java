@@ -2,7 +2,10 @@ package Controller;
 
 import Model.ninja;
 import Model.ninjaDAO;
+import Model.skill;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class ninjaController {
 
@@ -10,7 +13,11 @@ public class ninjaController {
     
     public List<ninja> getNinjaSkill() {
         
-        return (List<ninja>) ninjasDAO.getAllNinjas();
+        return new ArrayList<>(ninjasDAO.getAllNinjas().keySet());
+    }
+    
+    public Map<ninja, List<skill>> getNinjaWihSkill() {
+        return ninjasDAO.getAllNinjas();
     }
 
 }

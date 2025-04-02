@@ -15,10 +15,11 @@ public class KONOHA {
         while (true) {
             System.out.println("Ninjas Menu\n");
             System.out.println("1. List all ninjas with their skills");
+            System.out.print("Choose: ");
             
             int option = sc.nextInt();
             sc.nextLine();
-            
+            System.out.println("");
             switch (option) {
                 case 1:
                     ninjasView.showNinjas();
