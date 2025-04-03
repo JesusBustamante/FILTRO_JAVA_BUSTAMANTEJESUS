@@ -43,4 +43,51 @@ public class ninjaDAO {
         return list;
     }
     
+    public ninja getNinjaById(int id) {
+        String sql = "SELECT * FROM ninja WHERE id = ?";
+        
+        try (Connection conn = BBDD_Connection.conectar();
+            PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, id);
+            ResultSet rs = stmt.executeQuery();
+            
+            return rs.next() ? new ninja(rs.getInt("id"),
+                                        rs.getString("name"),
+                                        RangesNinja.valueOf(rs.getString("ranges").toUpperCase()),
+                                        rs.getString("village")
+                                        ) : null;
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
+    public List<mision> getAvailableMissions(int ninjaId) {
+        String sql = "SELECT m.id, m.description, m.ranges, m.reward FROM mision m"
+                + "LEFT JOIN ninja_mision nm ON m.id = nm.id_mision AND nm.id_ninja = ?"
+                + "WHERE nm.id_ninja IS NULL";
+        
+        List<mision> missions = new ArrayList<>();
+        
+        try (Connection conn = BBDD_Connection.conectar();
+            PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, ninjaId);
+            ResultSet rs = stmt.executeQuery();
+            
+            while(rs.next()) {
+                missions.add(new mision(rs.getInt("id"),
+                                        rs.getString("description"),
+                                        RangesMission.valueOf(rs.getString("ranges").toUpperCase()),
+                                        rs.getDouble("reward")
+                                        ));
+            }
+        
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return missions;
+    }
 }
