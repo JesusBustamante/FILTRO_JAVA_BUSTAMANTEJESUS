@@ -2,6 +2,7 @@ package Model;
 
 import java.util.List;
 import java.sql.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -65,9 +66,8 @@ public class ninjaDAO {
     }
     
     public List<mision> getAvailableMissions(int ninjaId) {
-        String sql = "SELECT m.id, m.description, m.ranges, m.reward FROM mision m"
-                + "LEFT JOIN ninja_mision nm ON m.id = nm.id_mision AND nm.id_ninja = ?"
-                + "WHERE nm.id_ninja IS NULL";
+        String sql = "SELECT m.id, m.description, m.ranges, m.reward FROM mision m "
+                + "LEFT JOIN ninja_mision nm ON m.id = nm.id_mision AND nm.id_ninja = ? WHERE nm.id_ninja IS NOT NULL";
         
         List<mision> missions = new ArrayList<>();
         
@@ -89,5 +89,67 @@ public class ninjaDAO {
             e.printStackTrace();
         }
         return missions;
+    }
+    
+    public List<mision> getCompletedMissions(int ninjaId) {
+        String sql = "SELECT m.id, m.description, m.ranges, m.reward FROM mision m "
+                + "LEFT JOIN ninja_mision nm ON m.id = nm.id_mision AND nm.id_ninja = ? WHERE nm.end_date IS NOT NULL";
+        
+        List<mision> missions = new ArrayList<>();
+        
+        try (Connection conn = BBDD_Connection.conectar();
+            PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, ninjaId);
+            ResultSet rs = stmt.executeQuery();
+            
+            while(rs.next()) {
+                missions.add(new mision(rs.getInt("id"),
+                                        rs.getString("description"),
+                                        RangesMission.valueOf(rs.getString("ranges").toUpperCase()),
+                                        rs.getDouble("reward")
+                                        ));
+            }
+        
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return missions;
+    }
+    
+    public boolean assignMission(int ninjaId, int missionId, LocalDate startDate) {
+        String sql = "INSERT INTO ninja_mision (id_ninja, id_mision, start_date) VALUES (?, ?, ?)";
+        
+        try (Connection conn = BBDD_Connection.conectar();
+            PreparedStatement stmt = conn.prepareStatement(sql)) {
+        
+            stmt.setInt(1, ninjaId);
+            stmt.setInt(2, missionId);
+            stmt.setDate(3, java.sql.Date.valueOf(startDate));
+            
+            return stmt.executeUpdate() > 0;
+                    
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    public boolean completeMission(int ninjaId, int missionId, LocalDate endDate) {
+        String sql = "UPDATE ninja_mision SET end_date = ? WHERE id_ninja = ?  AND id_mision = ?";
+        
+        try (Connection conn = BBDD_Connection.conectar();
+            PreparedStatement stmt = conn.prepareStatement(sql)) {
+        
+            stmt.setDate(1, java.sql.Date.valueOf(endDate));
+            stmt.setInt(2, ninjaId);
+            stmt.setInt(3, missionId);
+
+            return stmt.executeUpdate() > 0;
+                    
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 }
